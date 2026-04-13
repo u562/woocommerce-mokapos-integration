@@ -1,43 +1,77 @@
-
 <?php
-class Moka_Admin_Settings {
+/**
+ * Класс настроек интеграции Moka POS
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+class Moka_Admin_Settings extends WC_Integration {
+
+    /**
+     * Конструктор
+     */
     public function __construct() {
-        add_filter('woocommerce_integrations', [$this, 'add_integration']);
+        $this->id                 = 'moka_pos';
+        $this->method_title       = __( 'Moka POS', 'woocommerce-mokapos' );
+        $this->method_description = __( 'Интеграция с Moka POS для синхронизации товаров и остатков', 'woocommerce-mokapos' );
+
+        // Загрузка настроек
+        $this->init_form_fields();
+        $this->init_settings();
+
+        // Сохранение настроек
+        add_action( 'woocommerce_update_options_integration_' . $this->id, array( $this, 'process_admin_options' ) );
     }
 
-    public function add_integration($integrations) {
-        $integrations[] = 'WC_MokaPOS_Integration';
-        return $integrations;
-    }
-
+    /**
+     * Поля формы настроек
+     */
     public function init_form_fields() {
-        return [
-            'dealer_code' => [
-                'title' => 'Код дилера',
-                'type' => 'text',
-                'description' => 'Dealer code issued by the Moka United system[reference:5]',
-                'required' => true,
-            ],
-            'username' => [
-                'title' => 'Имя пользователя API',
-                'type' => 'text',
-                'required' => true,
-            ],
-            'password' => [
-                'title' => 'Пароль API',
-                'type' => 'password',
-                'required' => true,
-            ],
-            'test_mode' => [
-                'title' => 'Тестовый режим',
-                'type' => 'checkbox',
-                'description' => 'Использовать тестовую среду Moka',
-            ],
-            'auto_sync' => [
-                'title' => 'Авто-синхронизация',
-                'type' => 'checkbox',
-                'description' => 'Автоматически синхронизировать товары при сохранении',
-            ],
-        ];
+        $this->form_fields = array(
+            'dealer_code' => array(
+                'title'       => __( 'Код дилера', 'woocommerce-mokapos' ),
+                'type'        => 'text',
+                'description' => __( 'Dealer code issued by the Moka United system', 'woocommerce-mokapos' ),
+                'desc_tip'    => true,
+                'default'     => '',
+            ),
+            'username' => array(
+                'title'       => __( 'Имя пользователя API', 'woocommerce-mokapos' ),
+                'type'        => 'text',
+                'description' => __( 'API username from Moka United', 'woocommerce-mokapos' ),
+                'desc_tip'    => true,
+                'default'     => '',
+            ),
+            'password' => array(
+                'title'       => __( 'Пароль API', 'woocommerce-mokapos' ),
+                'type'        => 'password',
+                'description' => __( 'API password from Moka United', 'woocommerce-mokapos' ),
+                'desc_tip'    => true,
+                'default'     => '',
+            ),
+            'test_mode' => array(
+                'title'       => __( 'Тестовый режим', 'woocommerce-mokapos' ),
+                'type'        => 'checkbox',
+                'label'       => __( 'Использовать тестовую среду Moka', 'woocommerce-mokapos' ),
+                'description' => __( 'Включите для работы с тестовым API (service.refmokaunited.com)', 'woocommerce-mokapos' ),
+                'default'     => 'no',
+            ),
+            'auto_sync' => array(
+                'title'       => __( 'Авто-синхронизация', 'woocommerce-mokapos' ),
+                'type'        => 'checkbox',
+                'label'       => __( 'Автоматически синхронизировать товары при сохранении', 'woocommerce-mokapos' ),
+                'description' => __( 'При включении каждый раз при сохранении товара будет отправляться запрос в Moka', 'woocommerce-mokapos' ),
+                'default'     => 'no',
+            ),
+        );
+    }
+
+    /**
+     * Получить значение настройки (обёртка)
+     */
+    public function get_option_key() {
+        return 'woocommerce_' . $this->id . '_settings';
     }
 }
